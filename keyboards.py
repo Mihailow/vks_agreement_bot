@@ -15,11 +15,11 @@ async def company_keyboard(companies):
     return keyboard
 
 
-async def object_keyboard(objects):
+async def facility_keyboard(facilities):
     keyboard = InlineKeyboardMarkup()
-    for _object in objects:
-        keyboard.add(InlineKeyboardButton(text=_object["name"], callback_data=f"set_object_{_object['name']}"))
-    keyboard.add(InlineKeyboardButton(text="Без объекта", callback_data="set_object_no_object"))
+    for facility in facilities:
+        keyboard.add(InlineKeyboardButton(text=facility["name"], callback_data=f"set_facility_{facility['name']}"))
+    keyboard.add(InlineKeyboardButton(text="Без объекта", callback_data="set_facility_no_facility"))
     keyboard.add(InlineKeyboardButton(text="Отменить отправку", callback_data="cancel"))
     return keyboard
 

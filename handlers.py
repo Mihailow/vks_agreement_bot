@@ -76,13 +76,13 @@ async def status_new_add_document(message: types.Message, state: FSMContext):
 async def but_set_company_(callback_query: types.CallbackQuery, state: FSMContext):
     company_id = callback_query.data.replace("set_company_", "")
     company = await get_company(company_id)
-    objects = await get_objects(company_id)
+    facilities = await get_facilities(company_id)
 
     text = "⬇️ Выберите пункт меню ⬇️"
-    keyboard = await object_keyboard(objects)
+    keyboard = await facility_keyboard(facilities)
     await send_last_message(callback_query.from_user.id, text, keyboard)
 
-    await state.set_state(Status.new_add_object)
+    await state.set_state(Status.new_add_facility)
     await state.update_data(company_id=company_id)
     await state.update_data(company=company["name"])
 
@@ -96,28 +96,28 @@ async def status_new_add_company(message: types.Message, state: FSMContext):
     await send_last_message(message.from_user.id, text, keyboard)
 
 
-@dp.callback_query_handler(text_startswith="set_object_", state=Status.new_add_object)
+@dp.callback_query_handler(text_startswith="set_facility_", state=Status.new_add_facility)
 async def bet_set_object_(callback_query: types.CallbackQuery, state: FSMContext):
-    object_name = callback_query.data.replace("set_object_", "")
+    facility_name = callback_query.data.replace("set_facility_", "")
 
     text = "Напишите комментарий\n⬇️ Или выберите пункт меню ⬇️"
     keyboard = await send_without_text_keyboard()
     await send_last_message(callback_query.from_user.id, text, keyboard)
 
     await state.set_state(Status.new_add_comment)
-    if object_name != "no_object":
-        await state.update_data(object=object_name)
+    if facility_name != "no_facility":
+        await state.update_data(facility=facility_name)
     else:
-        await state.update_data(object=None)
+        await state.update_data(facility=None)
 
 
-@dp.message_handler(state=Status.new_add_object, content_types=types.ContentType.ANY)
+@dp.message_handler(state=Status.new_add_facility, content_types=types.ContentType.ANY)
 async def status_new_add_object(message: types.Message, state: FSMContext):
     company_id = (await state.get_data())["company_id"]
-    objects = await get_objects(company_id)
+    facilities = await get_facilities(company_id)
 
     text = "Я вас не понимаю\n⬇️ Выберите пункт меню ⬇️"
-    keyboard = await object_keyboard(objects)
+    keyboard = await facility_keyboard(facilities)
     await send_last_message(message.from_user.id, text, keyboard)
 
 

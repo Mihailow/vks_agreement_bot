@@ -12,7 +12,7 @@ DB_NAME = "vks_main"
 DB_USER = "postgres"
 DB_PASS = "postgres"
 
-telegram_token = "6353026522:AAGREBRShS_G8yYK93my6fOSDQgLDhUPyqc"
+telegram_token = "6353026522:AAH6nwB6AgNQKQaUwT9PFvfI-8vA7NuYwlY"
 is_testing = True
 from_email = "mihailbramnik@yandex.ru"
 password = "ufongxhxzjwmkryk"

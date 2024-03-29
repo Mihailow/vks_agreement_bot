@@ -21,7 +21,7 @@ from postgres import *
 class Status(StatesGroup):
     new_add_document = State()
     new_add_company = State()
-    new_add_object = State()
+    new_add_facility = State()
     new_add_comment = State()
 
     old_add_comment = State()
@@ -131,13 +131,13 @@ async def user_do_true(doc_id):
     for user_id in document["confirms"]:
         if not admins[user_id]["necessary"]:
             if document["confirms"][user_id] is None:
-                await update_document_confirms(document["id"], user_id, True)
-                await change_document_message(document["id"])
+                await update_document_confirms(document["document_id"], user_id, True)
+                await change_document_message(document["document_id"])
 
 
 async def create_document_text(document, admins):
     text = ""
-    keyboard = await confirm_keyboard(document["id"])
+    keyboard = await confirm_keyboard(document["document_id"])
     confirm_text = ""
     count = 0
     yes = 0
@@ -157,14 +157,14 @@ async def create_document_text(document, admins):
             document["status"] = "🔴 Отменено 🔴"
             if yes == count:
                 document["status"] = "🔵 Отправлено 🔵"
-            await update_document_status(document["id"], document["status"])
+            await update_document_status(document["document_id"], document["status"])
         keyboard = None
 
     if document["status"]:
         text += document["status"] + "\n\n"
     text += document["company"] + "\n\n"
-    if document["object"]:
-        text += document["object"] + "\n\n"
+    if document["facility"]:
+        text += document["facility"] + "\n\n"
     if document["text"]:
         text += document["text"] + "\n\n"
     for comment in document["comments"]:
@@ -222,10 +222,10 @@ async def send_message_email(document):
     msg["Date"] = formatdate(localtime=True)
     msg["Subject"] = subject
 
-    text = "doc_num:" + str(document["id"]) + "\n"
-    if document["object"]:
-        text += "Объект: " + str(document["object"]) + "\n"
-    text += "Автор: " + str(document["user_id"]) + "\n"
+    text = "doc_num:" + str(document["document_id"]) + "\n"
+    if document["facility"]:
+        text += "Объект: " + str(document["facility"]) + "\n"
+    text += "Автор: " + str(document["creator"]) + "\n"
     for comment in document["comments"]:
         text += comment + "\n"
     text += "\n"
