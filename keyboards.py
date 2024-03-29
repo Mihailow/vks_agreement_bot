@@ -1,0 +1,45 @@
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardButton, ReplyKeyboardMarkup
+
+
+async def main_keyboard():
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
+    keyboard.add(KeyboardButton(text="Добавить документ"))
+    return keyboard
+
+
+async def company_keyboard(companies):
+    keyboard = InlineKeyboardMarkup()
+    for company in companies:
+        keyboard.add(InlineKeyboardButton(text=company["name"], callback_data=f"set_company_{company['company_id']}"))
+    keyboard.add(InlineKeyboardButton(text="Отменить отправку", callback_data="cancel"))
+    return keyboard
+
+
+async def object_keyboard(objects):
+    keyboard = InlineKeyboardMarkup()
+    for _object in objects:
+        keyboard.add(InlineKeyboardButton(text=_object["name"], callback_data=f"set_object_{_object['name']}"))
+    keyboard.add(InlineKeyboardButton(text="Без объекта", callback_data="set_object_no_object"))
+    keyboard.add(InlineKeyboardButton(text="Отменить отправку", callback_data="cancel"))
+    return keyboard
+
+
+async def send_without_text_keyboard():
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text="Отправить без комментария", callback_data="send_without_text"))
+    keyboard.add(InlineKeyboardButton(text="Отменить отправку", callback_data="cancel"))
+    return keyboard
+
+
+async def confirm_keyboard(doc_id):
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text="✅", callback_data=f"yes_{doc_id}"))
+    keyboard.add(InlineKeyboardButton(text="❌", callback_data=f"no_{doc_id}"))
+    keyboard.add(InlineKeyboardButton(text="Добавить комментарий", callback_data=f"add_comment_{doc_id}"))
+    return keyboard
+
+
+async def cancel_keyboard():
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton(text="Отмена", callback_data="cancel"))
+    return keyboard
