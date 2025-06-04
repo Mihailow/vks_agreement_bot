@@ -49,7 +49,7 @@ async def status_new_add_document(message: types.Message, state: FSMContext):
         await state.update_data(text=message.text)
         await state.update_data(document_name=None)
     elif message.content_type == "document":
-        if not message.document.file_name.endswith(".pdf"):
+        if not message.document.file_name.lower().endswith(".pdf"):
             text = "Документ должен быть pdf!\n⬇️ Отправьте текст/картинку/документ ⬇️"
             keyboard = await cancel_keyboard()
             await send_last_message(message.from_user.id, text, keyboard)

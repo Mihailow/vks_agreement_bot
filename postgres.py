@@ -79,6 +79,9 @@ async def update_document_status(doc_id, status):
 async def get_document(doc_id):
     document = await postgres_select_one("SELECT * FROM agreement_documents WHERE document_id = %s;",
                                          (doc_id,))
+    admin = await postgres_select_one("SELECT * FROM admins WHERE tg_id = %s;",
+                                      (document["creator"],))
+    document["creator"] = admin["name"]
     try:
         confirms = {}
         for confirm in document["confirms"]:

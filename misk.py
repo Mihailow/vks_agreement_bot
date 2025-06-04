@@ -59,6 +59,11 @@ middleware = CheckBotStatusMiddleware()
 dp.middleware.setup(middleware)
 
 
+async def change_buttons():
+    commands = [BotCommand(command='start', description='Старт')]
+    await bot.set_my_commands(commands, BotCommandScopeDefault())
+
+
 async def send_message(chat_id, text, keyboard=None, document=None, reply=None):
     if document:
         try:
@@ -72,10 +77,13 @@ async def send_message(chat_id, text, keyboard=None, document=None, reply=None):
         except Exception as e:
             logging.error(f"send_message {chat_id}", exc_info=True)
 
-    mes = await bot.send_message(chat_id, text=text, reply_markup=keyboard, reply_to_message_id=reply)
-    logging.info(f"\n   Бот ответил пользователю {mes.chat.id}\n"
-                 f"   Id сообщения: {mes.message_id}\n"
-                 f"   Текст сообщения: {mes.text}\n")
+    try:
+        mes = await bot.send_message(chat_id, text=text, reply_markup=keyboard, reply_to_message_id=reply)
+        logging.info(f"\n   Бот ответил пользователю {mes.chat.id}\n"
+                     f"   Id сообщения: {mes.message_id}\n"
+                     f"   Текст сообщения: {mes.text}\n")
+    except Exception as e:
+        logging.error(f"send_message {chat_id}", exc_info=True)
     return mes
 
 
@@ -117,11 +125,11 @@ async def change_message(chat_id, mes_id, text, keyboard=None, caption=False):
 
 
 async def delete_document(data):
-    if "document_name" in data:
+    if "document_name" in data and data["document_name"] is not None:
         try:
             os.remove(data["document_name"])
         except Exception as e:
-            logging.error(f"delete_document {data['document_name']}", exc_info=True)
+            pass
 
 
 async def user_do_true(doc_id):
@@ -152,7 +160,9 @@ async def create_document_text(document, admins):
             confirm_text += "❌"
             count += 1
         confirm_text += "\n"
-    if count == len(document["confirms"]):
+    if document["status"]:
+        keyboard = None
+    elif count == len(document["confirms"]):
         if document["status"] != "🟢 Оплачено 🟢":
             document["status"] = "🔴 Отменено 🔴"
             if yes == count:
@@ -183,12 +193,15 @@ async def send_document(doc_id):
     messages = {}
     file_id = None
     for user_id in document["confirms"]:
-        if document["document_name"]:
-            mes = await send_message(user_id, text, keyboard, document['document_name'])
-            file_id = mes.document.file_id
-        else:
-            mes = await send_message(user_id, text, keyboard)
-        messages[user_id] = mes.message_id
+        try:
+            if document["document_name"]:
+                mes = await send_message(user_id, text, keyboard, document['document_name'])
+                file_id = mes.document.file_id
+            else:
+                mes = await send_message(user_id, text, keyboard)
+            messages[user_id] = mes.message_id
+        except Exception as e:
+            logging.error(f"send_document {user_id}", exc_info=True)
     await delete_document(document)
     await update_document_file_id(doc_id, file_id)
     await update_document_message_id(doc_id, messages)
@@ -200,18 +213,26 @@ async def change_document_message(doc_id):
     document, text, keyboard = await create_document_text(document, admins)
 
     for user_id in document["confirms"]:
-        if document["document_name"]:
-            await change_message(user_id, document["message_id"][user_id], text, keyboard, True)
-        else:
-            await change_message(user_id, document["message_id"][user_id], text, keyboard)
+        try:
+            if document["document_name"]:
+                await change_message(user_id, document["message_id"][user_id], text, keyboard, True)
+            else:
+                await change_message(user_id, document["message_id"][user_id], text, keyboard)
+        except Exception as e:
+            logging.error(f"change_document_message {user_id}", exc_info=True)
     if document["status"] == "🔵 Отправлено 🔵":
+        # try:
         await send_message_email(document)
+        # except:
+        #     await update_document_status(document["document_id"], "🔴 Ошибка отправки🔴")
+        #     await change_document_message(doc_id)
 
 
 async def send_message_email(document):
     try:
-        await bot.download_file_by_id(file_id=document["file_id"],
-                                      destination=document["document_name"])
+        if document["document_name"]:
+            await bot.download_file_by_id(file_id=document["file_id"],
+                                          destination=document["document_name"])
     except Exception as e:
         logging.error(f"send_message_email download_file_by_id {document['file_id']} {document['document_name']}",
                       exc_info=True)
@@ -243,8 +264,8 @@ async def send_message_email(document):
         text += document["text"]
         msg.attach(MIMEText(text))
 
-    server = smtplib.SMTP_SSL("smtp.yandex.ru", 465)
-    server.login(from_email, password)
+    server = smtplib.SMTP_SSL("smtp.ya.ru", 465)
+    server.login(from_email, from_email_password)
     server.sendmail(from_email, dest_email, msg.as_string())
     server.quit()
 
@@ -258,7 +279,7 @@ async def send_message_email(document):
 async def read_messages():
     try:
         connection = imaplib.IMAP4_SSL(host="imap.yandex.ru", port=993)
-        connection.login(user=from_email, password=password)
+        connection.login(user=from_email, password=from_email_password)
         status, msgs = connection.select("INBOX")
         assert status == "OK"
     except Exception as e:
